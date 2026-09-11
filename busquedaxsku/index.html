@@ -31,12 +31,16 @@
         .card{ background:white; padding:12px; border-radius:10px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.1); border:1px solid #ddd; }
         .card-title{ font-weight:bold; margin-bottom:10px; text-transform:uppercase; color: var(--primary); font-size: 12px; }
         
-        input{ padding:12px; border-radius:8px; border:1px solid #ccc; text-align:center; font-size: 18px; width: 100%; font-weight: bold; }
+        /* Contenedor de Búsqueda Flex */
+        .search-flex { display: flex; gap: 8px; margin-bottom: 0px; align-items: stretch; }
+        .search-flex input { flex: 1; padding: 12px 8px; border-radius: 8px; border: 1px solid #ccc; text-align: center; font-size: 18px; font-weight: bold; transition: 0.3s; width: 100%; }
+        .search-flex.has-desc input { flex: 0 0 35%; font-size: 16px; }
+        .desc-preview { display: none; flex: 1; font-size: 11px; background: #e8f0fe; border: 1px solid #bbdefb; border-radius: 8px; color: #1e3a5f; align-items: center; justify-content: center; text-align: center; font-weight: bold; padding: 5px; line-height: 1.2; text-transform: uppercase;}
         
-        .btn-qr{ width:100%; padding:14px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:5px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-qr{ width:100%; padding:14px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:10px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
         /* Botones Invertidos */
-        .btn-search{ background:var(--secondary); margin-top: 10px; font-size: 16px; }
+        .btn-search{ background:var(--secondary); font-size: 16px; }
         .btn-bloqueados-container { text-align: center; margin-top: 12px; border-top: 1px solid #eee; padding-top: 12px; }
         .btn-bloqueados{ background:var(--off); color: white; padding: 10px; width: 100%; border-radius: 6px; border: none; font-weight: bold; font-size: 12px; cursor: pointer; }
         
@@ -92,13 +96,16 @@
 
     <div class="card">
         <div class="card-title">1. Cargar Excel de Stock</div>
-        <input type="file" id="excelFile" accept=".xlsx,.xls" style="margin-bottom: 10px; font-size: 14px;">
+        <input type="file" id="excelFile" accept=".xlsx,.xls" style="margin-bottom: 10px; font-size: 14px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%;">
         <button class="btn-qr" id="btnCargar" onclick="cargarExcel()">📂 CARGAR PLANILLA</button>
     </div>
 
     <div class="card" id="seccion-busqueda" style="display:none;">
         <div class="card-title">2. Buscar Artículo</div>
-        <input type="text" id="in-sku" inputmode="numeric" placeholder="Ingrese SKU..." onkeyup="if(event.key==='Enter') buscarPorInput()">
+        <div class="search-flex" id="search-flex-container">
+            <input type="text" id="in-sku" inputmode="numeric" placeholder="Ingrese SKU..." onkeyup="if(event.key==='Enter') buscarPorInput()">
+            <div id="desc-preview" class="desc-preview"></div>
+        </div>
         <button class="btn-qr btn-search" onclick="buscarPorInput()">🔍 BUSCAR ARTÍCULO</button>
         
         <div class="btn-bloqueados-container">
@@ -121,10 +128,9 @@ const mapSector = {
     "E": "1E0E", "T": "1C0C", "X": "140X", "Y": "150Y",
     "Z": "16OZ", "14": "P014", "15": "P015",
     "PICKING": "P00A", "PREMIUM": "P002",
-    "STAGE": "ST00" // Agregado ST00 para capturar ST000000
+    "STAGE": "ST00"
 };
 
-// Función para obtener el nombre amigable
 function getFriendlySector(ubi) {
     let prefix = ubi.length >= 4 ? ubi.substring(0, 4) : ubi;
     for (const [key, value] of Object.entries(mapSector)) {
@@ -133,7 +139,6 @@ function getFriendlySector(ubi) {
     return prefix;
 }
 
-// Advertencia al recargar la página si hay datos
 window.addEventListener("beforeunload", function(e) {
     if (excelData.length > 0) {
         e.preventDefault();
@@ -189,7 +194,6 @@ function ejecutarComandosVoz(t) {
     if (t.includes("apaga microfono") || t.includes("apagar microfono")) { procesandoComandos=false; actualizarBotonVisual(); sonar(400); return; }
 
     let ok = false;
-    
     if (t.includes("bloqueados") || t.includes("bloqueado")) {
         mostrarBloqueados();
         ok = true;
@@ -212,7 +216,6 @@ function cargarExcel() {
 
     if(!file){ alert("Primero selecciona el archivo Excel."); return; }
 
-    // Advertencia al cargar un nuevo archivo si ya hay datos
     if (excelData.length > 0) {
         if (!confirm("Ya hay datos cargados en el sistema. ¿Desea actualizar y cargar una nueva planilla?")) {
             input.value = ""; 
@@ -270,9 +273,27 @@ function cargarExcel() {
     reader.readAsArrayBuffer(file);
 }
 
+// --- ACTUALIZAR PREVIEW DE DESCRIPCIÓN AL BUSCAR ---
+function actualizarPreviewDescripcion(val) {
+    let preview = document.getElementById("desc-preview");
+    let container = document.getElementById("search-flex-container");
+    
+    let exactMatch = excelData.find(d => d.skuVisual.toUpperCase() === val);
+    if (exactMatch && val !== "") {
+        preview.innerText = exactMatch.desc;
+        preview.style.display = "flex";
+        container.classList.add("has-desc");
+    } else {
+        preview.style.display = "none";
+        preview.innerText = "";
+        container.classList.remove("has-desc");
+    }
+}
+
 // --- FUNCIONES DE BÚSQUEDA Y RENDERIZADO ---
 function buscarPorInput() {
     let val = document.getElementById("in-sku").value.trim().toUpperCase();
+    actualizarPreviewDescripcion(val);
     if(!val) return;
     
     let datos = excelData.filter(d => 
@@ -285,6 +306,7 @@ function buscarPorInput() {
 
 function mostrarBloqueados() {
     let val = document.getElementById("in-sku").value.trim().toUpperCase();
+    actualizarPreviewDescripcion(val);
     let datos = excelData.filter(d => d.estadoLote === "Bloqueado");
     
     if (val) {
@@ -333,7 +355,6 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
             sectoresMap[sectorNombre].push(item);
         });
 
-        // Lógica de ordenamiento: Normales primero alfabéticamente, luego PICKING y STAGE.
         let sortedSectors = Object.keys(sectoresMap).sort((a, b) => {
             let isSpecialA = (a === "PICKING" || a === "STAGE");
             let isSpecialB = (b === "PICKING" || b === "STAGE");
