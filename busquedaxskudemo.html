@@ -145,6 +145,23 @@ function getFriendlySector(ubi) {
     return prefix;
 }
 
+// Formateador para mostrar la coma en la pantalla
+function fmt(num, isPallet = false) {
+    let n = Number(num);
+    if (isPallet) {
+        return n.toFixed(1).replace(/\.0$/, '').replace('.', ',');
+    }
+    return parseFloat(n.toFixed(3)).toString().replace('.', ',');
+}
+
+// Convertidor de texto con coma (de Sheets) a decimal matemático real
+function parseVal(val) {
+    if (val === undefined || val === null || val === "") return 0;
+    let str = String(val).trim().replace(',', '.');
+    let num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
+}
+
 window.addEventListener("beforeunload", function(e) {
     if (excelData.length > 0) {
         e.preventDefault();
@@ -235,12 +252,14 @@ async function cargarDesdeGoogleSheets() {
         
         const nombreHoja = workbook.SheetNames.find(n => n.toLowerCase().includes("vstock")) || workbook.SheetNames[0];
         const sheet = workbook.Sheets[nombreHoja];
-        const json = XLSX.utils.sheet_to_json(sheet);
+        
+        // El parámetro { raw: false } es CLAVE: fuerza a leer la celda como texto literal ("28,333")
+        const json = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
         if(json.length === 0) throw new Error("La hoja está vacía");
 
         excelData = json.map(r => {
-            const findKey = (list) => list.find(k => r.hasOwnProperty(k) && r[k] !== undefined);
+            const findKey = (list) => list.find(k => r.hasOwnProperty(k) && r[k] !== undefined && r[k] !== "");
             
             let statusCrudo = r[findKey(["LotStatus", "LOTSTATUS", "Estado", "estado"])] || "";
             let statusTxt = String(statusCrudo).trim();
@@ -249,10 +268,11 @@ async function cargarDesdeGoogleSheets() {
             return {
                 ubicacion: String(r[findKey(["ubicaciónOK", "Ubicación", "UBICACION", "ubicacion"])] || ""),
                 lote: String(r[findKey(["Lote", "LOTE"])] || "").trim(),
-                cantOriginal: Number(r[findKey(["CantEnMano", "Cantidad", "CANTIDAD", "cant"])] || 0),
+                // Utilizamos parseVal para que convierta la coma de texto en un decimal matemático
+                cantOriginal: parseVal(r[findKey(["CantEnMano", "Cantidad", "CANTIDAD", "cant"])]),
                 skuVisual: String(r[findKey(["articuloOK", "SKU", "Articulo", "articulo"])] || "").replace(/\s+/g, ''),
-                desc: r[findKey(["articulodescripcion", "DESCRIPCION", "Descripcion"])] || "",
-                pallet: Number(r[findKey(["Paletizado", "PALETIZADO", "Palet", "paletizado"])] || 0),
+                desc: String(r[findKey(["articulodescripcion", "DESCRIPCION", "Descripcion"])] || ""),
+                pallet: parseVal(r[findKey(["Paletizado", "PALETIZADO", "Palet", "paletizado"])]),
                 letraEstado: statusTxt,
                 estadoLote: isBloqueado ? "Bloqueado" : "Aprobado"
             };
@@ -335,7 +355,7 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         let totalCantSku = itemsSku.reduce((sum, item) => sum + item.cantOriginal, 0);
         
         let palletBase = itemsSku.find(i => i.pallet > 0)?.pallet || 0;
-        let totalPalletsSku = palletBase > 0 ? (totalCantSku / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
+        let totalPalletsSku = palletBase > 0 ? (totalCantSku / palletBase) : 0;
 
         let card = document.createElement("div");
         card.className = "card";
@@ -343,7 +363,7 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         let html = `
             <div class='res-header'>SKU: ${sku} <br><span style="font-size:11px; color:#555; font-weight:normal;">${desc}</span></div>
             <div class='res-total'>
-                <b>Stock Total Buscado:</b> ${totalCantSku} CA <b>(${totalPalletsSku} PL)</b>
+                <b>Stock Total Buscado:</b> ${fmt(totalCantSku)} CA <b>(${fmt(totalPalletsSku, true)} PL)</b>
             </div>
         `;
         
@@ -368,13 +388,13 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         sortedSectors.forEach((sector, idxSec) => {
             let itemsSector = sectoresMap[sector];
             let totalSector = itemsSector.reduce((sum, item) => sum + item.cantOriginal, 0);
-            let palletsSector = palletBase > 0 ? (totalSector / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
+            let palletsSector = palletBase > 0 ? (totalSector / palletBase) : 0;
             let contentId = `sec-content-${idxSku}-${idxSec}`;
 
             html += `
                 <div class="sector-header" onclick="document.getElementById('${contentId}').classList.toggle('active')">
                     <span>📁 Sector: <b>${sector}</b></span>
-                    <span style="font-size:12px;"><b>${totalSector}</b> CA | <b>${palletsSector}</b> PL ▾</span>
+                    <span style="font-size:12px;"><b>${fmt(totalSector)}</b> CA | <b>${fmt(palletsSector, true)}</b> PL ▾</span>
                 </div>
                 
                 <div id="${contentId}" class="sector-content">
@@ -391,14 +411,14 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
             itemsSector.forEach(item => {
                 let badgeClass = item.estadoLote === "Aprobado" ? "badge-green" : "badge-red";
                 let estadoTxt = item.estadoLote === "Aprobado" ? "OK" : `${item.letraEstado}`;
-                let rowPallets = item.pallet > 0 ? (item.cantOriginal / item.pallet).toFixed(1).replace(/\.0$/, '') : "0";
+                let rowPallets = item.pallet > 0 ? (item.cantOriginal / item.pallet) : 0;
 
                 html += `
                     <tr>
                         <td><b>${item.ubicacion}</b></td>
                         <td>${item.lote}</td>
-                        <td>${item.cantOriginal}</td>
-                        <td>${rowPallets}</td>
+                        <td>${fmt(item.cantOriginal)}</td>
+                        <td>${fmt(rowPallets, true)}</td>
                         <td><span class='${badgeClass}'>${estadoTxt}</span></td>
                     </tr>
                 `;
