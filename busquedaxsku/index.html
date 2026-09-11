@@ -22,54 +22,56 @@
         *{box-sizing:border-box; font-family: 'Segoe UI', sans-serif;}
         body{ margin:0; background:var(--bg); padding-bottom: 80px; scroll-behavior: smooth; }
         
-        #main-screen{ max-width:600px; margin:auto; padding:15px; }
+        #main-screen{ max-width:600px; margin:auto; padding:10px; }
         
-        .header{ text-align:center; margin-bottom:20px; }
-        .header h1{ font-size:22px; margin:0; color:var(--primary); text-transform: uppercase; }
-        .header h2{ font-size:14px; margin:5px 0; font-style:italic; color: #555; }
+        .header{ text-align:center; margin-bottom:15px; }
+        .header h1{ font-size:20px; margin:0; color:var(--primary); text-transform: uppercase; }
+        .header h2{ font-size:13px; margin:5px 0; font-style:italic; color: #555; }
 
-        .card{ background:white; padding:15px; border-radius:12px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); border:1px solid #ddd; }
-        .card-title{ font-weight:bold; margin-bottom:10px; text-transform:uppercase; color: var(--primary); font-size: 13px; }
+        .card{ background:white; padding:12px; border-radius:10px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.1); border:1px solid #ddd; }
+        .card-title{ font-weight:bold; margin-bottom:10px; text-transform:uppercase; color: var(--primary); font-size: 12px; }
         
-        input{ padding:14px; border-radius:8px; border:1px solid #ccc; text-align:center; font-size: 18px; width: 100%; font-weight: bold; }
+        input{ padding:12px; border-radius:8px; border:1px solid #ccc; text-align:center; font-size: 18px; width: 100%; font-weight: bold; }
         
-        .btn-qr{ width:100%; padding:16px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:5px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-qr{ width:100%; padding:14px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:5px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
         /* Botones Invertidos */
         .btn-search{ background:var(--secondary); margin-top: 10px; font-size: 16px; }
-        .btn-bloqueados-container { text-align: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
-        .btn-bloqueados{ background:var(--off); color: white; padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .btn-bloqueados-container { text-align: center; margin-top: 12px; border-top: 1px solid #eee; padding-top: 12px; }
+        .btn-bloqueados{ background:var(--off); color: white; padding: 10px; width: 100%; border-radius: 6px; border: none; font-weight: bold; font-size: 12px; cursor: pointer; }
         
-        .desc-box{ background:#e8f0fe; padding:12px; border-radius:8px; margin: 10px 0; border-left:4px solid #2196F3; font-weight:500; text-align: center; color: #333;}
+        .desc-box{ background:#e8f0fe; padding:10px; border-radius:8px; margin: 10px 0; border-left:4px solid #2196F3; font-weight:500; text-align: center; color: #333; font-size: 13px;}
         
         /* Acordeón de Sectores */
-        .res-header { font-weight: bold; color: var(--primary); font-size: 15px; margin-bottom: 8px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        .sector-header { background: #f0f4f8; padding: 12px; margin-top: 8px; border-radius: 6px; border: 1px solid #d1d9e6; display: flex; justify-content: space-between; cursor: pointer; font-size: 14px; transition: background 0.2s; align-items: center; }
-        .sector-header:hover { background: #e2e8f0; }
-        .sector-content { display: none; padding-top: 10px; animation: fadeIn 0.3s ease; }
+        .res-header { font-weight: bold; color: var(--primary); font-size: 14px; margin-bottom: 6px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+        .res-total { font-size:12px; margin-bottom:10px; color:#333; }
+        
+        .sector-header { background: #f0f4f8; padding: 10px; margin-top: 8px; border-radius: 6px; border: 1px solid #d1d9e6; display: flex; justify-content: space-between; cursor: pointer; font-size: 13px; align-items: center; }
+        .sector-header:active { background: #e2e8f0; }
+        .sector-content { display: none; padding-top: 8px; animation: fadeIn 0.2s ease; }
         .sector-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Tablas */
-        .res-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .res-table th, .res-table td { border: 1px solid #ddd; padding: 8px 4px; text-align: center; }
-        .res-table th { background: var(--primary); color: white; font-size: 11px;}
+        /* Tablas Optimizadas para Móvil */
+        .res-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .res-table th, .res-table td { border: 1px solid #ddd; padding: 6px 2px; text-align: center; word-break: break-word; }
+        .res-table th { background: var(--primary); color: white; font-size: 10px; text-transform: uppercase; }
         .res-table tr:nth-child(even) { background-color: #f9f9f9; }
         
-        .badge-green { background: var(--on); color: white; padding: 4px 6px; border-radius: 12px; font-size: 10px; font-weight: bold; display: inline-block; }
-        .badge-red { background: var(--off); color: white; padding: 4px 6px; border-radius: 12px; font-size: 10px; font-weight: bold; display: inline-block; }
+        .badge-green { background: var(--on); color: white; padding: 3px 5px; border-radius: 8px; font-size: 9px; font-weight: bold; display: inline-block; }
+        .badge-red { background: var(--off); color: white; padding: 3px 5px; border-radius: 8px; font-size: 9px; font-weight: bold; display: inline-block; }
 
         /* Botón Flotante Voz */
         .voice-fab {
-            position: fixed; bottom: 20px; right: 20px; width: 65px; height: 65px; border-radius: 50%;
+            position: fixed; bottom: 15px; right: 15px; width: 60px; height: 60px; border-radius: 50%;
             background: var(--off); color: white; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 2000; border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 2000; border: none;
         }
         .voice-fab.listening { background: var(--on); animation: pulse 1.5s infinite; }
         .voice-fab.standby { background: var(--standby); }
         #voice-status {
-            position: fixed; bottom: 95px; right: 20px; background: rgba(0,0,0,0.8); color: white;
-            padding: 6px 15px; border-radius: 20px; font-size: 12px; pointer-events: none; opacity: 0; transition: 0.3s;
+            position: fixed; bottom: 85px; right: 15px; background: rgba(0,0,0,0.8); color: white;
+            padding: 5px 12px; border-radius: 20px; font-size: 11px; pointer-events: none; opacity: 0; transition: 0.3s;
         }
         .voice-fab.listening + #voice-status, .voice-fab.standby + #voice-status { opacity: 1; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
@@ -78,7 +80,7 @@
 <body>
 
 <button class="voice-fab" id="voiceBtn" onclick="toggleVozFisico()">
-    <svg viewBox="0 0 24 24" width="30" fill="white"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+    <svg viewBox="0 0 24 24" width="28" fill="white"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
 </button>
 <div id="voice-status">Listo</div>
 
@@ -90,17 +92,17 @@
 
     <div class="card">
         <div class="card-title">1. Cargar Excel de Stock</div>
-        <input type="file" id="excelFile" accept=".xlsx,.xls" style="margin-bottom: 10px;">
+        <input type="file" id="excelFile" accept=".xlsx,.xls" style="margin-bottom: 10px; font-size: 14px;">
         <button class="btn-qr" id="btnCargar" onclick="cargarExcel()">📂 CARGAR PLANILLA</button>
     </div>
 
     <div class="card" id="seccion-busqueda" style="display:none;">
         <div class="card-title">2. Buscar Artículo</div>
-        <input type="text" id="in-sku" placeholder="Ingrese SKU..." onkeyup="if(event.key==='Enter') buscarPorInput()">
+        <input type="text" id="in-sku" inputmode="numeric" placeholder="Ingrese SKU..." onkeyup="if(event.key==='Enter') buscarPorInput()">
         <button class="btn-qr btn-search" onclick="buscarPorInput()">🔍 BUSCAR ARTÍCULO</button>
         
         <div class="btn-bloqueados-container">
-            <button class="btn-bloqueados" onclick="mostrarBloqueados()">🚫 VER LOTES BLOQUEADOS (SKU ACTUAL / TODOS)</button>
+            <button class="btn-bloqueados" onclick="mostrarBloqueados()">🚫 VER LOTES BLOQUEADOS</button>
         </div>
     </div>
 
@@ -112,6 +114,23 @@
 <script>
 let excelData = [];
 const exclusionesNormales = ["ROTURAPK", "DESTAPE", "REPROPK"];
+
+// --- DICCIONARIO DE SECTORES ---
+const mapSector = {
+    "A": "1A0A", "B": "1B0B", "C": "1C0C", "D": "1D0D",
+    "E": "1E0E", "T": "1C0C", "X": "140X", "Y": "150Y",
+    "Z": "16OZ", "14": "P014", "15": "P015",
+    "PICKING": "P00A", "PREMIUM": "P002"
+};
+
+// Función para obtener el nombre amigable (Ej: "1A0A" -> "A")
+function getFriendlySector(ubi) {
+    let prefix = ubi.length >= 4 ? ubi.substring(0, 4) : ubi;
+    for (const [key, value] of Object.entries(mapSector)) {
+        if (value === prefix) return key;
+    }
+    return prefix; // Si no está en el diccionario, muestra los 4 dígitos
+}
 
 // --- RECONOCIMIENTO DE VOZ ---
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -235,12 +254,10 @@ function cargarExcel() {
 }
 
 // --- FUNCIONES DE BÚSQUEDA Y RENDERIZADO ---
-
 function buscarPorInput() {
     let val = document.getElementById("in-sku").value.trim().toUpperCase();
     if(!val) return;
     
-    // Búsqueda "Normal": Filtra excluyendo las ubicaciones requeridas
     let datos = excelData.filter(d => 
         d.skuVisual.toUpperCase().includes(val) && 
         !exclusionesNormales.includes(d.ubicacion.toUpperCase())
@@ -251,11 +268,8 @@ function buscarPorInput() {
 
 function mostrarBloqueados() {
     let val = document.getElementById("in-sku").value.trim().toUpperCase();
-    
-    // Filtro primario: Solo bloqueados (Acá SI incluye todas las ubicaciones)
     let datos = excelData.filter(d => d.estadoLote === "Bloqueado");
     
-    // Si hay un SKU en el input, restringe los bloqueados solo a ese SKU
     if (val) {
         datos = datos.filter(d => d.skuVisual.toUpperCase().includes(val));
     }
@@ -281,58 +295,63 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         let itemsSku = datos.filter(d => d.skuVisual === sku);
         let desc = itemsSku[0].desc;
         let totalCantSku = itemsSku.reduce((sum, item) => sum + item.cantOriginal, 0);
+        
+        // Obtener el valor de pallet base del SKU (busca el primer registro que tenga pallet > 0)
+        let palletBase = itemsSku.find(i => i.pallet > 0)?.pallet || 0;
+        let totalPalletsSku = palletBase > 0 ? (totalCantSku / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
 
         let card = document.createElement("div");
         card.className = "card";
         
         let html = `
-            <div class='res-header'>SKU: ${sku} <br><span style="font-size:12px; color:#555; font-weight:normal;">${desc}</span></div>
-            <div style="font-size:12px; margin-bottom:10px;"><b>Stock Total Buscado:</b> ${totalCantSku} CA</div>
+            <div class='res-header'>SKU: ${sku} <br><span style="font-size:11px; color:#555; font-weight:normal;">${desc}</span></div>
+            <div class='res-total'>
+                <b>Stock Total Buscado:</b> ${totalCantSku} CA <b>(${totalPalletsSku} PL)</b>
+            </div>
         `;
         
-        // Agrupación por Sector (Primeros 4 caracteres de la ubicación)
+        // Agrupación por Nombre de Sector Amigable
         let sectoresMap = {};
         itemsSku.forEach(item => {
-            let sector = item.ubicacion.length >= 4 ? item.ubicacion.substring(0, 4) : item.ubicacion;
-            if (!sectoresMap[sector]) sectoresMap[sector] = [];
-            sectoresMap[sector].push(item);
+            let sectorNombre = getFriendlySector(item.ubicacion);
+            if (!sectoresMap[sectorNombre]) sectoresMap[sectorNombre] = [];
+            sectoresMap[sectorNombre].push(item);
         });
 
         Object.keys(sectoresMap).sort().forEach((sector, idxSec) => {
             let itemsSector = sectoresMap[sector];
             let totalSector = itemsSector.reduce((sum, item) => sum + item.cantOriginal, 0);
+            let palletsSector = palletBase > 0 ? (totalSector / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
             let contentId = `sec-content-${idxSku}-${idxSec}`;
 
             html += `
                 <div class="sector-header" onclick="document.getElementById('${contentId}').classList.toggle('active')">
                     <span>📁 Sector: <b>${sector}</b></span>
-                    <span><b>${totalSector}</b> CA ▾</span>
+                    <span style="font-size:12px;"><b>${totalSector}</b> CA | <b>${palletsSector}</b> PL ▾</span>
                 </div>
                 
                 <div id="${contentId}" class="sector-content">
                     <table class='res-table'>
                         <tr>
-                            <th>Ubicación</th>
+                            <th>Ubic.</th>
                             <th>Lote</th>
-                            <th>Cant.</th>
-                            <th>Pallets</th>
-                            <th>Estado</th>
+                            <th>CA</th>
+                            <th>PL</th>
+                            <th>Est.</th>
                         </tr>
             `;
             
             itemsSector.forEach(item => {
                 let badgeClass = item.estadoLote === "Aprobado" ? "badge-green" : "badge-red";
-                let estadoTxt = item.estadoLote === "Aprobado" ? "Aprobado" : `${item.letraEstado}`;
-                
-                // Cálculo de pallets (Redondeado a 1 decimal, eliminando ".0" si es entero)
-                let pallets = item.pallet > 0 ? (item.cantOriginal / item.pallet).toFixed(1).replace(/\.0$/, '') : "0";
+                let estadoTxt = item.estadoLote === "Aprobado" ? "OK" : `${item.letraEstado}`;
+                let rowPallets = item.pallet > 0 ? (item.cantOriginal / item.pallet).toFixed(1).replace(/\.0$/, '') : "0";
 
                 html += `
                     <tr>
                         <td><b>${item.ubicacion}</b></td>
                         <td>${item.lote}</td>
                         <td>${item.cantOriginal}</td>
-                        <td>${pallets}</td>
+                        <td>${rowPallets}</td>
                         <td><span class='${badgeClass}'>${estadoTxt}</span></td>
                     </tr>
                 `;
