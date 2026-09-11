@@ -31,27 +31,33 @@
         .card{ background:white; padding:15px; border-radius:12px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); border:1px solid #ddd; }
         .card-title{ font-weight:bold; margin-bottom:10px; text-transform:uppercase; color: var(--primary); font-size: 13px; }
         
-        .flex-row{ display:flex; gap:10px; margin-bottom:10px; align-items: center; }
-        .flex-col{ flex:1; display:flex; flex-direction:column; }
-        label{ font-size:11px; font-weight:bold; margin-bottom:3px; color: #666; }
-        
-        input{ padding:12px; border-radius:8px; border:1px solid #ccc; text-align:center; font-size: 16px; width: 100%; }
+        input{ padding:14px; border-radius:8px; border:1px solid #ccc; text-align:center; font-size: 18px; width: 100%; font-weight: bold; }
         
         .btn-qr{ width:100%; padding:16px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:5px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-bloqueados{ background:var(--off); }
-        .btn-search{ background:var(--secondary); padding: 12px; margin-top: 0; }
+        
+        /* Botones Invertidos */
+        .btn-search{ background:var(--secondary); margin-top: 10px; font-size: 16px; }
+        .btn-bloqueados-container { text-align: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .btn-bloqueados{ background:var(--off); color: white; padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; font-size: 12px; cursor: pointer; }
         
         .desc-box{ background:#e8f0fe; padding:12px; border-radius:8px; margin: 10px 0; border-left:4px solid #2196F3; font-weight:500; text-align: center; color: #333;}
         
-        /* Tablas de Resultados */
+        /* Acordeón de Sectores */
         .res-header { font-weight: bold; color: var(--primary); font-size: 15px; margin-bottom: 8px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        .res-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .sector-header { background: #f0f4f8; padding: 12px; margin-top: 8px; border-radius: 6px; border: 1px solid #d1d9e6; display: flex; justify-content: space-between; cursor: pointer; font-size: 14px; transition: background 0.2s; align-items: center; }
+        .sector-header:hover { background: #e2e8f0; }
+        .sector-content { display: none; padding-top: 10px; animation: fadeIn 0.3s ease; }
+        .sector-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tablas */
+        .res-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         .res-table th, .res-table td { border: 1px solid #ddd; padding: 8px 4px; text-align: center; }
-        .res-table th { background: var(--primary); color: white; font-size: 12px;}
+        .res-table th { background: var(--primary); color: white; font-size: 11px;}
         .res-table tr:nth-child(even) { background-color: #f9f9f9; }
         
-        .badge-green { background: var(--on); color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
-        .badge-red { background: var(--off); color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-green { background: var(--on); color: white; padding: 4px 6px; border-radius: 12px; font-size: 10px; font-weight: bold; display: inline-block; }
+        .badge-red { background: var(--off); color: white; padding: 4px 6px; border-radius: 12px; font-size: 10px; font-weight: bold; display: inline-block; }
 
         /* Botón Flotante Voz */
         .voice-fab {
@@ -82,26 +88,22 @@
         <h2>por M2 Consultoría Digital</h2>
     </div>
 
-    <!-- CARGA DE EXCEL -->
     <div class="card">
         <div class="card-title">1. Cargar Excel de Stock</div>
         <input type="file" id="excelFile" accept=".xlsx,.xls" style="margin-bottom: 10px;">
         <button class="btn-qr" id="btnCargar" onclick="cargarExcel()">📂 CARGAR PLANILLA</button>
     </div>
 
-    <!-- BÚSQUEDA -->
     <div class="card" id="seccion-busqueda" style="display:none;">
         <div class="card-title">2. Buscar Artículo</div>
-        <div class="flex-row">
-            <div class="flex-col">
-                <input type="text" id="in-sku" placeholder="Ingrese SKU..." onkeyup="if(event.key==='Enter') buscarPorInput()">
-            </div>
-            <button class="btn-qr btn-search" style="width: auto;" onclick="buscarPorInput()">🔍 BUSCAR</button>
+        <input type="text" id="in-sku" placeholder="Ingrese SKU..." onkeyup="if(event.key==='Enter') buscarPorInput()">
+        <button class="btn-qr btn-search" onclick="buscarPorInput()">🔍 BUSCAR ARTÍCULO</button>
+        
+        <div class="btn-bloqueados-container">
+            <button class="btn-bloqueados" onclick="mostrarBloqueados()">🚫 VER LOTES BLOQUEADOS (SKU ACTUAL / TODOS)</button>
         </div>
-        <button class="btn-qr btn-bloqueados" onclick="mostrarBloqueados()">🚫 VER LOTES BLOQUEADOS</button>
     </div>
 
-    <!-- RESULTADOS -->
     <div id="resultados-container">
         <div class="desc-box" id="lbl-status-inicial">Cargue el Excel para comenzar...</div>
     </div>
@@ -109,6 +111,7 @@
 
 <script>
 let excelData = [];
+const exclusionesNormales = ["ROTURAPK", "DESTAPE", "REPROPK"];
 
 // --- RECONOCIMIENTO DE VOZ ---
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -159,14 +162,10 @@ function ejecutarComandosVoz(t) {
 
     let ok = false;
     
-    // Comando: Buscar bloqueados
     if (t.includes("bloqueados") || t.includes("bloqueado")) {
         mostrarBloqueados();
         ok = true;
-    }
-    // Comando: Buscar SKU
-    else if (t.includes("buscar") || t.includes("sku") || t.includes("escu")) {
-        // Extrae números dictados en el comando
+    } else if (t.includes("buscar") || t.includes("sku") || t.includes("escu")) {
         let match = t.match(/\d+/);
         if (match) {
             document.getElementById("in-sku").value = match[0];
@@ -174,7 +173,6 @@ function ejecutarComandosVoz(t) {
             ok = true;
         }
     }
-    
     if(ok) sonar(880);
 }
 
@@ -201,14 +199,12 @@ function cargarExcel() {
 
             if(json.length === 0) throw new Error("La hoja está vacía");
 
-            // Mapeo adaptado a las nuevas columnas solicitadas
             excelData = json.map(r => {
                 const findKey = (list) => list.find(k => r.hasOwnProperty(k) && r[k] !== undefined);
                 
-                // Buscar estado de lote (LotStatus)
                 let statusCrudo = r[findKey(["LotStatus", "LOTSTATUS", "Estado", "estado"])] || "";
                 let statusTxt = String(statusCrudo).trim();
-                let isBloqueado = statusTxt !== ""; // Si no está en blanco, está bloqueado
+                let isBloqueado = statusTxt !== "";
 
                 return {
                     ubicacion: String(r[findKey(["ubicaciónOK", "Ubicación", "UBICACION", "ubicacion"])] || ""),
@@ -216,6 +212,7 @@ function cargarExcel() {
                     cantOriginal: Number(r[findKey(["CantEnMano", "Cantidad", "CANTIDAD", "cant"])] || 0),
                     skuVisual: String(r[findKey(["articuloOK", "SKU", "Articulo", "articulo"])] || "").replace(/\s+/g, ''),
                     desc: r[findKey(["articulodescripcion", "DESCRIPCION", "Descripcion"])] || "",
+                    pallet: Number(r[findKey(["Paletizado", "PALETIZADO", "Palet", "paletizado"])] || 0),
                     letraEstado: statusTxt,
                     estadoLote: isBloqueado ? "Bloqueado" : "Aprobado"
                 };
@@ -243,21 +240,33 @@ function buscarPorInput() {
     let val = document.getElementById("in-sku").value.trim().toUpperCase();
     if(!val) return;
     
-    // Filtramos buscando coincidencias parciales o totales en el SKU
-    let datos = excelData.filter(d => d.skuVisual.toUpperCase().includes(val));
+    // Búsqueda "Normal": Filtra excluyendo las ubicaciones requeridas
+    let datos = excelData.filter(d => 
+        d.skuVisual.toUpperCase().includes(val) && 
+        !exclusionesNormales.includes(d.ubicacion.toUpperCase())
+    );
     
     renderResultados(datos, val, false);
 }
 
 function mostrarBloqueados() {
+    let val = document.getElementById("in-sku").value.trim().toUpperCase();
+    
+    // Filtro primario: Solo bloqueados (Acá SI incluye todas las ubicaciones)
     let datos = excelData.filter(d => d.estadoLote === "Bloqueado");
-    document.getElementById("in-sku").value = ""; // Limpiar campo
-    renderResultados(datos, "BLOQUEADOS", true);
+    
+    // Si hay un SKU en el input, restringe los bloqueados solo a ese SKU
+    if (val) {
+        datos = datos.filter(d => d.skuVisual.toUpperCase().includes(val));
+    }
+    
+    let terminoInfo = val ? `BLOQUEADOS (${val})` : "TODOS LOS BLOQUEADOS";
+    renderResultados(datos, terminoInfo, true);
 }
 
 function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
     let container = document.getElementById("resultados-container");
-    container.innerHTML = ""; // Limpiar resultados anteriores
+    container.innerHTML = ""; 
 
     if (datos.length === 0) {
         container.innerHTML = `<div class='desc-box' style='border-left-color: var(--off);'>
@@ -266,44 +275,72 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         return;
     }
 
-    // Agrupamos los resultados por SKU para mostrarlos ordenados
     let skusUnicos = [...new Set(datos.map(d => d.skuVisual))];
 
-    skusUnicos.forEach(sku => {
-        let items = datos.filter(d => d.skuVisual === sku);
-        let desc = items[0].desc;
-        let totalCant = items.reduce((sum, item) => sum + item.cantOriginal, 0);
+    skusUnicos.forEach((sku, idxSku) => {
+        let itemsSku = datos.filter(d => d.skuVisual === sku);
+        let desc = itemsSku[0].desc;
+        let totalCantSku = itemsSku.reduce((sum, item) => sum + item.cantOriginal, 0);
 
         let card = document.createElement("div");
         card.className = "card";
         
         let html = `
             <div class='res-header'>SKU: ${sku} <br><span style="font-size:12px; color:#555; font-weight:normal;">${desc}</span></div>
-            <div style="font-size:12px; margin-bottom:10px;"><b>Stock total de esta consulta:</b> ${totalCant}</div>
-            <table class='res-table'>
-                <tr>
-                    <th>Ubicación</th>
-                    <th>Lote</th>
-                    <th>Cant.</th>
-                    <th>Estado</th>
-                </tr>
+            <div style="font-size:12px; margin-bottom:10px;"><b>Stock Total Buscado:</b> ${totalCantSku} CA</div>
         `;
         
-        items.forEach(item => {
-            let badgeClass = item.estadoLote === "Aprobado" ? "badge-green" : "badge-red";
-            let estadoTxt = item.estadoLote === "Aprobado" ? "Aprobado" : `Bloqueado (${item.letraEstado})`;
-            
+        // Agrupación por Sector (Primeros 4 caracteres de la ubicación)
+        let sectoresMap = {};
+        itemsSku.forEach(item => {
+            let sector = item.ubicacion.length >= 4 ? item.ubicacion.substring(0, 4) : item.ubicacion;
+            if (!sectoresMap[sector]) sectoresMap[sector] = [];
+            sectoresMap[sector].push(item);
+        });
+
+        Object.keys(sectoresMap).sort().forEach((sector, idxSec) => {
+            let itemsSector = sectoresMap[sector];
+            let totalSector = itemsSector.reduce((sum, item) => sum + item.cantOriginal, 0);
+            let contentId = `sec-content-${idxSku}-${idxSec}`;
+
             html += `
-                <tr>
-                    <td><b>${item.ubicacion}</b></td>
-                    <td>${item.lote}</td>
-                    <td>${item.cantOriginal}</td>
-                    <td><span class='${badgeClass}'>${estadoTxt}</span></td>
-                </tr>
+                <div class="sector-header" onclick="document.getElementById('${contentId}').classList.toggle('active')">
+                    <span>📁 Sector: <b>${sector}</b></span>
+                    <span><b>${totalSector}</b> CA ▾</span>
+                </div>
+                
+                <div id="${contentId}" class="sector-content">
+                    <table class='res-table'>
+                        <tr>
+                            <th>Ubicación</th>
+                            <th>Lote</th>
+                            <th>Cant.</th>
+                            <th>Pallets</th>
+                            <th>Estado</th>
+                        </tr>
             `;
+            
+            itemsSector.forEach(item => {
+                let badgeClass = item.estadoLote === "Aprobado" ? "badge-green" : "badge-red";
+                let estadoTxt = item.estadoLote === "Aprobado" ? "Aprobado" : `${item.letraEstado}`;
+                
+                // Cálculo de pallets (Redondeado a 1 decimal, eliminando ".0" si es entero)
+                let pallets = item.pallet > 0 ? (item.cantOriginal / item.pallet).toFixed(1).replace(/\.0$/, '') : "0";
+
+                html += `
+                    <tr>
+                        <td><b>${item.ubicacion}</b></td>
+                        <td>${item.lote}</td>
+                        <td>${item.cantOriginal}</td>
+                        <td>${pallets}</td>
+                        <td><span class='${badgeClass}'>${estadoTxt}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += `</table></div>`;
         });
         
-        html += `</table>`;
         card.innerHTML = html;
         container.appendChild(card);
     });
