@@ -120,17 +120,26 @@ const mapSector = {
     "A": "1A0A", "B": "1B0B", "C": "1C0C", "D": "1D0D",
     "E": "1E0E", "T": "1C0C", "X": "140X", "Y": "150Y",
     "Z": "16OZ", "14": "P014", "15": "P015",
-    "PICKING": "P00A", "PREMIUM": "P002"
+    "PICKING": "P00A", "PREMIUM": "P002",
+    "STAGE": "ST00" // Agregado ST00 para capturar ST000000
 };
 
-// Función para obtener el nombre amigable (Ej: "1A0A" -> "A")
+// Función para obtener el nombre amigable
 function getFriendlySector(ubi) {
     let prefix = ubi.length >= 4 ? ubi.substring(0, 4) : ubi;
     for (const [key, value] of Object.entries(mapSector)) {
         if (value === prefix) return key;
     }
-    return prefix; // Si no está en el diccionario, muestra los 4 dígitos
+    return prefix;
 }
+
+// Advertencia al recargar la página si hay datos
+window.addEventListener("beforeunload", function(e) {
+    if (excelData.length > 0) {
+        e.preventDefault();
+        e.returnValue = "¿Seguro que desea salir? Deberá cargar los datos nuevamente.";
+    }
+});
 
 // --- RECONOCIMIENTO DE VOZ ---
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -202,6 +211,14 @@ function cargarExcel() {
     const file = input.files[0];
 
     if(!file){ alert("Primero selecciona el archivo Excel."); return; }
+
+    // Advertencia al cargar un nuevo archivo si ya hay datos
+    if (excelData.length > 0) {
+        if (!confirm("Ya hay datos cargados en el sistema. ¿Desea actualizar y cargar una nueva planilla?")) {
+            input.value = ""; 
+            return;
+        }
+    }
 
     btn.innerText = "⌛ PROCESANDO...";
     btn.disabled = true;
@@ -296,7 +313,6 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         let desc = itemsSku[0].desc;
         let totalCantSku = itemsSku.reduce((sum, item) => sum + item.cantOriginal, 0);
         
-        // Obtener el valor de pallet base del SKU (busca el primer registro que tenga pallet > 0)
         let palletBase = itemsSku.find(i => i.pallet > 0)?.pallet || 0;
         let totalPalletsSku = palletBase > 0 ? (totalCantSku / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
 
@@ -310,7 +326,6 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
             </div>
         `;
         
-        // Agrupación por Nombre de Sector Amigable
         let sectoresMap = {};
         itemsSku.forEach(item => {
             let sectorNombre = getFriendlySector(item.ubicacion);
@@ -318,7 +333,19 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
             sectoresMap[sectorNombre].push(item);
         });
 
-        Object.keys(sectoresMap).sort().forEach((sector, idxSec) => {
+        // Lógica de ordenamiento: Normales primero alfabéticamente, luego PICKING y STAGE.
+        let sortedSectors = Object.keys(sectoresMap).sort((a, b) => {
+            let isSpecialA = (a === "PICKING" || a === "STAGE");
+            let isSpecialB = (b === "PICKING" || b === "STAGE");
+            
+            if (isSpecialA && !isSpecialB) return 1;
+            if (!isSpecialA && isSpecialB) return -1;
+            if (isSpecialA && isSpecialB) return a.localeCompare(b);
+            
+            return a.localeCompare(b);
+        });
+
+        sortedSectors.forEach((sector, idxSec) => {
             let itemsSector = sectoresMap[sector];
             let totalSector = itemsSector.reduce((sum, item) => sum + item.cantOriginal, 0);
             let palletsSector = palletBase > 0 ? (totalSector / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
