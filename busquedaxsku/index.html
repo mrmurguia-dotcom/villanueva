@@ -95,9 +95,9 @@
     </div>
 
     <div class="card">
-        <div class="card-title">1. Cargar Excel de Stock</div>
-        <input type="file" id="excelFile" accept=".xlsx,.xls" style="margin-bottom: 10px; font-size: 14px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%;">
-        <button class="btn-qr" id="btnCargar" onclick="cargarExcel()">📂 CARGAR PLANILLA</button>
+        <div class="card-title">1. Base de Datos en Nube</div>
+        <button class="btn-qr" id="btnCargar" onclick="cargarDesdeGoogleSheets()">🔄 SINCRONIZAR STOCK ACTUAL</button>
+        <div style="font-size: 10px; text-align: center; margin-top: 8px; color: #666;">Conectado a Google Sheets</div>
     </div>
 
     <div class="card" id="seccion-busqueda" style="display:none;">
@@ -114,11 +114,17 @@
     </div>
 
     <div id="resultados-container">
-        <div class="desc-box" id="lbl-status-inicial">Cargue el Excel para comenzar...</div>
+        <div class="desc-box" id="lbl-status-inicial">Sincronice el stock para comenzar...</div>
     </div>
 </div>
 
 <script>
+// ==========================================
+// CONFIGURACIÓN: PEGA AQUÍ TU ENLACE PUBLICADO
+// (Archivo > Compartir > Publicar en la web > Microsoft Excel .xlsx)
+const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vStDcjoIpraZ3gYveFArwpZU8ozDnF8E7ciLa5UOew5kDbcNGIx3TdhOAU8-JQNN_m9crWr1pU7XA8l/pub?output=xlsx";
+// ==========================================
+
 let excelData = [];
 const exclusionesNormales = ["ROTURAPK", "DESTAPE", "REPROPK"];
 
@@ -137,6 +143,23 @@ function getFriendlySector(ubi) {
         if (value === prefix) return key;
     }
     return prefix;
+}
+
+// Formateador para mostrar la coma en la pantalla
+function fmt(num, isPallet = false) {
+    let n = Number(num);
+    if (isPallet) {
+        return n.toFixed(1).replace(/\.0$/, '').replace('.', ',');
+    }
+    return parseFloat(n.toFixed(3)).toString().replace('.', ',');
+}
+
+// Convertidor de texto con coma (de Sheets) a decimal matemático real
+function parseVal(val) {
+    if (val === undefined || val === null || val === "") return 0;
+    let str = String(val).trim().replace(',', '.');
+    let num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
 }
 
 window.addEventListener("beforeunload", function(e) {
@@ -208,69 +231,65 @@ function ejecutarComandosVoz(t) {
     if(ok) sonar(880);
 }
 
-// --- LÓGICA DE CARGA DE EXCEL ---
-function cargarExcel() {
-    const btn = document.getElementById("btnCargar");
-    const input = document.getElementById("excelFile");
-    const file = input.files[0];
-
-    if(!file){ alert("Primero selecciona el archivo Excel."); return; }
-
-    if (excelData.length > 0) {
-        if (!confirm("Ya hay datos cargados en el sistema. ¿Desea actualizar y cargar una nueva planilla?")) {
-            input.value = ""; 
-            return;
-        }
+// --- LÓGICA DE CARGA DESDE GOOGLE SHEETS ---
+async function cargarDesdeGoogleSheets() {
+    if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === "PEGA_AQUI_EL_ENLACE_PUBLICADO_DE_TU_EXCEL") {
+        alert("⚠️ Primero debes configurar la URL de tu Google Sheets en el código.");
+        return;
     }
 
-    btn.innerText = "⌛ PROCESANDO...";
+    const btn = document.getElementById("btnCargar");
+    btn.innerText = "⌛ DESCARGANDO DATOS...";
     btn.disabled = true;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: "array"});
+    try {
+        const response = await fetch(GOOGLE_SHEET_URL);
+        if (!response.ok) throw new Error("No se pudo descargar el archivo.");
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, {type: "array"});
+        
+        const nombreHoja = workbook.SheetNames.find(n => n.toLowerCase().includes("vstock")) || workbook.SheetNames[0];
+        const sheet = workbook.Sheets[nombreHoja];
+        
+        // El parámetro { raw: false } es CLAVE: fuerza a leer la celda como texto literal ("28,333")
+        const json = XLSX.utils.sheet_to_json(sheet, { raw: false });
+
+        if(json.length === 0) throw new Error("La hoja está vacía");
+
+        excelData = json.map(r => {
+            const findKey = (list) => list.find(k => r.hasOwnProperty(k) && r[k] !== undefined && r[k] !== "");
             
-            const nombreHoja = workbook.SheetNames.find(n => n.toLowerCase().includes("vstock")) || workbook.SheetNames[0];
-            const sheet = workbook.Sheets[nombreHoja];
-            const json = XLSX.utils.sheet_to_json(sheet);
+            let statusCrudo = r[findKey(["LotStatus", "LOTSTATUS", "Estado", "estado"])] || "";
+            let statusTxt = String(statusCrudo).trim();
+            let isBloqueado = statusTxt !== "";
 
-            if(json.length === 0) throw new Error("La hoja está vacía");
+            return {
+                ubicacion: String(r[findKey(["ubicaciónOK", "Ubicación", "UBICACION", "ubicacion"])] || ""),
+                lote: String(r[findKey(["Lote", "LOTE"])] || "").trim(),
+                // Utilizamos parseVal para que convierta la coma de texto en un decimal matemático
+                cantOriginal: parseVal(r[findKey(["CantEnMano", "Cantidad", "CANTIDAD", "cant"])]),
+                skuVisual: String(r[findKey(["articuloOK", "SKU", "Articulo", "articulo"])] || "").replace(/\s+/g, ''),
+                desc: String(r[findKey(["articulodescripcion", "DESCRIPCION", "Descripcion"])] || ""),
+                pallet: parseVal(r[findKey(["Paletizado", "PALETIZADO", "Palet", "paletizado"])]),
+                letraEstado: statusTxt,
+                estadoLote: isBloqueado ? "Bloqueado" : "Aprobado"
+            };
+        });
 
-            excelData = json.map(r => {
-                const findKey = (list) => list.find(k => r.hasOwnProperty(k) && r[k] !== undefined);
-                
-                let statusCrudo = r[findKey(["LotStatus", "LOTSTATUS", "Estado", "estado"])] || "";
-                let statusTxt = String(statusCrudo).trim();
-                let isBloqueado = statusTxt !== "";
-
-                return {
-                    ubicacion: String(r[findKey(["ubicaciónOK", "Ubicación", "UBICACION", "ubicacion"])] || ""),
-                    lote: String(r[findKey(["Lote", "LOTE"])] || "").trim(),
-                    cantOriginal: Number(r[findKey(["CantEnMano", "Cantidad", "CANTIDAD", "cant"])] || 0),
-                    skuVisual: String(r[findKey(["articuloOK", "SKU", "Articulo", "articulo"])] || "").replace(/\s+/g, ''),
-                    desc: r[findKey(["articulodescripcion", "DESCRIPCION", "Descripcion"])] || "",
-                    pallet: Number(r[findKey(["Paletizado", "PALETIZADO", "Palet", "paletizado"])] || 0),
-                    letraEstado: statusTxt,
-                    estadoLote: isBloqueado ? "Bloqueado" : "Aprobado"
-                };
-            });
-
-            alert("✅ ¡Cargado! " + excelData.length + " registros listos.");
-            document.getElementById("seccion-busqueda").style.display = "block";
-            document.getElementById("lbl-status-inicial").style.display = "none";
-            document.getElementById("in-sku").focus();
-            
-        } catch(err) {
-            console.error(err);
-            alert("❌ Error al leer el archivo. Verifique el formato.");
-        } finally {
-            btn.innerText = "📂 CARGAR PLANILLA";
-            btn.disabled = false;
-        }
-    };
-    reader.readAsArrayBuffer(file);
+        alert("✅ ¡Stock sincronizado! " + excelData.length + " registros listos.");
+        document.getElementById("seccion-busqueda").style.display = "block";
+        document.getElementById("lbl-status-inicial").style.display = "none";
+        document.getElementById("in-sku").focus();
+        
+    } catch(err) {
+        console.error(err);
+        alert("❌ Error al conectar con Google Sheets. Verifique el enlace y su conexión a internet.");
+    } finally {
+        btn.innerText = "🔄 SINCRONIZAR STOCK ACTUAL";
+        btn.disabled = false;
+    }
 }
 
 // --- ACTUALIZAR PREVIEW DE DESCRIPCIÓN AL BUSCAR ---
@@ -336,7 +355,7 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         let totalCantSku = itemsSku.reduce((sum, item) => sum + item.cantOriginal, 0);
         
         let palletBase = itemsSku.find(i => i.pallet > 0)?.pallet || 0;
-        let totalPalletsSku = palletBase > 0 ? (totalCantSku / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
+        let totalPalletsSku = palletBase > 0 ? (totalCantSku / palletBase) : 0;
 
         let card = document.createElement("div");
         card.className = "card";
@@ -344,7 +363,7 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         let html = `
             <div class='res-header'>SKU: ${sku} <br><span style="font-size:11px; color:#555; font-weight:normal;">${desc}</span></div>
             <div class='res-total'>
-                <b>Stock Total Buscado:</b> ${totalCantSku} CA <b>(${totalPalletsSku} PL)</b>
+                <b>Stock Total Buscado:</b> ${fmt(totalCantSku)} CA <b>(${fmt(totalPalletsSku, true)} PL)</b>
             </div>
         `;
         
@@ -369,13 +388,13 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
         sortedSectors.forEach((sector, idxSec) => {
             let itemsSector = sectoresMap[sector];
             let totalSector = itemsSector.reduce((sum, item) => sum + item.cantOriginal, 0);
-            let palletsSector = palletBase > 0 ? (totalSector / palletBase).toFixed(1).replace(/\.0$/, '') : "0";
+            let palletsSector = palletBase > 0 ? (totalSector / palletBase) : 0;
             let contentId = `sec-content-${idxSku}-${idxSec}`;
 
             html += `
                 <div class="sector-header" onclick="document.getElementById('${contentId}').classList.toggle('active')">
                     <span>📁 Sector: <b>${sector}</b></span>
-                    <span style="font-size:12px;"><b>${totalSector}</b> CA | <b>${palletsSector}</b> PL ▾</span>
+                    <span style="font-size:12px;"><b>${fmt(totalSector)}</b> CA | <b>${fmt(palletsSector, true)}</b> PL ▾</span>
                 </div>
                 
                 <div id="${contentId}" class="sector-content">
@@ -392,14 +411,14 @@ function renderResultados(datos, terminoBusqueda, esFiltroBloqueados) {
             itemsSector.forEach(item => {
                 let badgeClass = item.estadoLote === "Aprobado" ? "badge-green" : "badge-red";
                 let estadoTxt = item.estadoLote === "Aprobado" ? "OK" : `${item.letraEstado}`;
-                let rowPallets = item.pallet > 0 ? (item.cantOriginal / item.pallet).toFixed(1).replace(/\.0$/, '') : "0";
+                let rowPallets = item.pallet > 0 ? (item.cantOriginal / item.pallet) : 0;
 
                 html += `
                     <tr>
                         <td><b>${item.ubicacion}</b></td>
                         <td>${item.lote}</td>
-                        <td>${item.cantOriginal}</td>
-                        <td>${rowPallets}</td>
+                        <td>${fmt(item.cantOriginal)}</td>
+                        <td>${fmt(rowPallets, true)}</td>
                         <td><span class='${badgeClass}'>${estadoTxt}</span></td>
                     </tr>
                 `;
