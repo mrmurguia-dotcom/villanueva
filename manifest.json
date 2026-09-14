@@ -1,7 +1,7 @@
 {
-  "name": "M2 - Consultoria Digital",
-  "short_name": "Consultora M2",
-  "start_url": "/Penaflor/index.html",
+  "name": "Inventario VN",
+  "short_name": "Inventario VN",
+  "start_url": "/villanueva/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e3a5f",
@@ -12,7 +12,7 @@
       "type": "image/png"
     },
     {
-      "src": "/Penaflor/icon-512x512.png",
+      "src": "/villanueva/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
